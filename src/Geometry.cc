@@ -6,6 +6,9 @@
 #include <G4GeometryManager.hh>
 #include <G4SolidStore.hh>
 #include <G4VisAttributes.hh>
+#include <G4Orb.hh>
+#include <G4SubtractionSolid.hh>
+
 Geometry::Geometry() {
 
 
@@ -15,7 +18,7 @@ Geometry::Geometry() {
     
 
 
-    size = 15 * m;
+
 
 }
 
@@ -31,33 +34,27 @@ G4VPhysicalVolume* Geometry::Construct() {
     G4LogicalVolumeStore::GetInstance()->Clean();
     G4SolidStore::GetInstance()->Clean();
 
-    world = new G4Box("world", size / 2., size / 2., size / 2.);
+    world = new G4Box("world", 50*m, 50*m, 50*m);
     world_log = new G4LogicalVolume(world, world_mat, "world_log");
     world_log->SetVisAttributes(G4VisAttributes::Invisible);
     world_VP = new G4PVPlacement(nullptr, G4ThreeVector(), world_log, "world_PV", nullptr, false, 0);
 
-    G4Tubs* water = new G4Tubs("tube",3*cm,10*cm,40/2*cm,0,270*deg);
-    G4LogicalVolume * water_log = new G4LogicalVolume(water,water_mat,"water_log");
-    water_log->SetVisAttributes(G4Colour::Blue());
-    new G4PVPlacement(new G4RotationMatrix(0, 45*deg, 0),G4ThreeVector(5*m,0,0),water_log,"water_PVP",world_log,false,0);
-
-    auto Box  = new G4Box("box", 2*m, 2*m, 2*m );
-    auto Box_log = new G4LogicalVolume(Box, water_mat, "box_log");
-    Box_log->SetVisAttributes(G4Colour::Cyan());
-    auto Box_PV = new G4PVPlacement(0, G4ThreeVector(), Box_log, "Box_PV", world_log, false,0);
 
 
-    auto Box1  = new G4Box("box1", 1*m, 1*m, 1*m );
-    auto Box1_log = new G4LogicalVolume(Box1, water_mat, "box1_log");
-    Box1_log->SetVisAttributes(G4Colour::Red());
-    auto Box1_PV = new G4PVPlacement(0, G4ThreeVector(0,3*m, 0), Box1_log, "Box1_PV", world_log, false,0);
+    auto box  = new G4Box("box", 2*m, 2*m, 2*m );
 
 
-    auto Box2  = new G4Box("box2", 1*m, 1*m, 1*m );
-    auto Box2_log = new G4LogicalVolume(Box2, water_mat, "box2_log");
-    Box2_log->SetVisAttributes(G4Colour::Black());
-    auto Box2_PV = new G4PVPlacement(0, G4ThreeVector(-3*m,0, 0), Box2_log, "Box2_PV", world_log, false,0);
+    auto orb = new G4Orb("orb",2.2*m);
+    G4SubtractionSolid* Sub = new G4SubtractionSolid("My_sub", box, orb);
+G4LogicalVolume *Sub_log = new G4LogicalVolume(Sub, world_mat, "my_sub_log");
+    Sub_log -> SetVisAttributes(G4Colour::Cyan());
+    for (int i=0; i<5; i++) {
+        for (int j=0; j<5; j++) {
+            new G4PVPlacement (new G4RotationMatrix(15*i*deg,15*deg*j,0), G4ThreeVector(6*i*m,6*j*m,0), Sub_log, "my_sub_PVP", world_log, false,0);
 
+        }
+
+    }
 
 
     return world_VP;
